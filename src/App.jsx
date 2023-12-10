@@ -14,6 +14,7 @@ import { useQuery } from 'react-query';
 import { SearchIconJSX } from './components/SearchIconJSX';
 import SearchIcon from '@mui/icons-material/Search';
 import Stroke from './components/Stroke';
+import Instructions from './components/Instructions';
 
 function fetchData(searchQuery) {
     const apiUrl = `http://localhost:3000/q?query=${searchQuery}`;
@@ -25,7 +26,6 @@ function App() {
     const [queryEnabled, setQueryEnabled] = useState(false);
     const [forceFetch, setForceFetch] = useState(false);
     const [selectedItem, setSelectedItem] = useState({ item: null, title: "", body: "", answer: "" });
-
 
     const { data, isLoading, refetch } = useQuery(
         ['search', searchQuery],
@@ -52,13 +52,14 @@ function App() {
     const rowsPerPage = 20;
     const [page, setPage] = useState(1);
 
-    const pages = Math.ceil(resultsArray.length / rowsPerPage);
-
     const items = useMemo(() => {
         const start = (page - 1) * rowsPerPage;
         const end = start + rowsPerPage;
 
-        return resultsArray.slice(start, end);
+        return resultsArray.slice(start, end).map((item, index) => ({
+            ...item,
+            rank: start + index + 1,
+        }));
     }, [page, resultsArray, rowsPerPage]);
 
     const handleClick = () => {
@@ -115,7 +116,7 @@ function App() {
                                     showShadow
                                     color="primary"
                                     page={page}
-                                    total={pages}
+                                    total={Math.ceil(resultsArray.length / rowsPerPage)}
                                     onChange={(page) => setPage(page)}
                                 />
                             </div>
@@ -136,7 +137,7 @@ function App() {
                             </TableColumn>
                         </TableHeader>
                         <TableBody items={items}>
-                            {(item, index) => (
+                            {(item) => (
                                 <TableRow key={item.Title}>
                                     {(columnKey) => (
                                         <TableCell
@@ -150,6 +151,7 @@ function App() {
                                                 ) : (
                                                     <>
                                                         {item[columnKey]}{' '}
+                                                        {columnKey === 'Rank' && (<>{item.rank}</>)}
                                                         {columnKey === 'Action' && (
                                                             <Button
                                                                 color="success"
@@ -211,7 +213,10 @@ function App() {
                         </ModalContent>
                     </Modal>
                 </>
-            ) : null}
+            ) :
+                <div style={{display: 'flex', justifyContent: 'center', paddingTop: '4rem'}}>
+                    <Instructions/>
+                </div>}
         </div>
     );
 }
