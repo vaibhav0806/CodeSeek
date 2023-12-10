@@ -142,7 +142,7 @@ function App() {
                                     {(columnKey) => (
                                         <TableCell
                                             style={{
-                                                textAlign: columnKey === 'Title' ? 'left' : 'right',
+                                                textAlign: columnKey === 'Title' || columnKey==='Rank' ? 'left' : 'right',
                                             }}
                                         >
                                             <>
