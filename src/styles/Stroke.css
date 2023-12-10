@@ -1,0 +1,14 @@
+/* Stroke.css */
+
+
+h1 {
+    background-clip: text;
+    background-image: linear-gradient(to right, #000, #D3D3D3);
+    color: var(--color-background);
+    font-size: var(--font-size);
+    font-weight: var(--font-weight);
+    letter-spacing: var(--letter-spacing);
+    padding: calc(--stroke-width / 2);
+    -webkit-text-stroke-color: transparent;
+    -webkit-text-stroke-width: var(--stroke-width);
+}
