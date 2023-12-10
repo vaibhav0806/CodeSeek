@@ -15,6 +15,8 @@ import { SearchIconJSX } from './components/SearchIconJSX';
 import SearchIcon from '@mui/icons-material/Search';
 import Stroke from './components/Stroke';
 import Instructions from './components/Instructions';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function fetchData(searchQuery) {
     const apiUrl = `http://localhost:3000/q?query=${searchQuery}`;
@@ -45,6 +47,7 @@ function App() {
     }, [forceFetch, refetch]);
 
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
+    const { isOpen: isWarningOpen, onOpen: onWarningOpen, onOpenChange: onWarningOpenChange } = useDisclosure();
 
     const searchResults = data?.RankedDocs || {};
     const resultsArray = Array.isArray(searchResults) ? searchResults : Object.values(searchResults);
@@ -67,15 +70,51 @@ function App() {
         refetch();
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            console.log('h')
+            onWarningOpen()
+        }
+    }
+
     const isQueryEntered = searchQuery.trim() !== '';
+
+    const relevantToast = () => toast.success("This document has been marked relevant!");
+    const irrelevantToast = () => toast.error("This document has been marked irrelevant!");
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <Modal isOpen={isWarningOpen} onOpenChange={onWarningOpenChange} classNames={{
+                body: "py-6",
+                backdrop: "bg-[#292f46]/50 backdrop-opacity-40",
+                base: "border-[#292f46] bg-[#19172c] dark:bg-[#19172c] text-[#a8b0d3]",
+                header: "border-b-[1px] border-[#292f46]",
+                footer: "border-t-[1px] border-[#292f46]",
+                closeButton: "hover:bg-white/5 active:bg-white/10",
+            }}>
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">Warning</ModalHeader>
+                            <ModalBody>
+                                <p>{`Don't press enter to search!`}</p>
+                                <p>Click on the <SearchIcon /> icon on the right side of the input bar.</p>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="danger" variant="light" onPress={onClose}>
+                                    Close
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
             <Stroke />
             <Input
                 radius="lg"
                 placeholder="Type your query and press enter"
                 value={searchQuery}
+                onKeyDown={handleKeyDown}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 classNames={{
                     label: 'text-black/50 dark:text-white/90',
@@ -103,9 +142,9 @@ function App() {
                 }
             />
             {isLoading ? (
-                <Spinner color="success" />
+                <Spinner color="success" style={{ padding: "15rem" }} />
             ) : isQueryEntered ? (
-                <>
+                <div className='mt-5'>
                     <Table
                         aria-label="Example table with client-side pagination"
                         bottomContent={
@@ -142,7 +181,7 @@ function App() {
                                     {(columnKey) => (
                                         <TableCell
                                             style={{
-                                                textAlign: columnKey === 'Title' || columnKey==='Rank' ? 'left' : 'right',
+                                                textAlign: columnKey === 'Title' || columnKey === 'Rank' ? 'left' : 'right',
                                             }}
                                         >
                                             <>
@@ -182,6 +221,7 @@ function App() {
                         isOpen={isOpen}
                         onOpenChange={onOpenChange}
                         size="5xl"
+                        scrollBehavior='inside'
                     >
                         <ModalContent>
                             {(onClose) => (
@@ -193,30 +233,43 @@ function App() {
                                     <ModalBody className="bg-light-secondary">
                                         {/* Modal Body with enhanced styles */}
                                         <p className="text-lg text-default-900 mb-4">
-                                            {selectedItem.body}
+                                            <strong>Description: </strong>
+                                            {selectedItem.body.trim().split('\n').map((line, index) => (
+                                                <div key={index}>
+                                                    {line}
+                                                    <br />
+                                                </div>
+                                            ))}
                                         </p>
                                         <p className="text-lg text-default-900">
-                                            {selectedItem.answer}
+                                            <strong>Answer: </strong>
+                                            {selectedItem.answer.split('\n').map((line, index) => (
+                                                <div key={index}>
+                                                    {line}
+                                                    <br />
+                                                </div>
+                                            ))}
                                         </p>
                                     </ModalBody>
                                     <ModalFooter>
                                         {/* Modal Footer with buttons */}
-                                        <Button color="danger" variant="light" onPress={onClose}>
-                                            Close
+                                        <Button color="danger" variant="light" onPress={() => { onClose(); irrelevantToast(); }}>
+                                            Non-relevant
                                         </Button>
-                                        <Button color="primary" onPress={onClose}>
-                                            Action
+                                        <Button color="success" variant="light" onPress={() => { onClose(); relevantToast(); }}>
+                                            Relevant
                                         </Button>
                                     </ModalFooter>
                                 </>
                             )}
                         </ModalContent>
                     </Modal>
-                </>
+                </div>
             ) :
-                <div style={{display: 'flex', justifyContent: 'center', paddingTop: '4rem'}}>
-                    <Instructions/>
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '4rem' }}>
+                    <Instructions />
                 </div>}
+            <ToastContainer />
         </div>
     );
 }
